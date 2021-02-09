@@ -110,3 +110,32 @@ def analyze_speech_from_audio(audio_file):
 
     speech = r.recognize_google(audio)
     analyze_speech(speech)
+
+
+def analyze_answer(audio_file, features_file):
+    speech, speech_rate = get_audio_and_rate(audio_file)
+    max_freq, min_freq, avg_freq, pauses = analyze_audio_file(audio_file)
+    tags_pos, sentiment_scores = analyze_speech(speech)
+
+    # record features
+    f = open(features_file, 'w')
+    f.write(speech + '\n')
+
+    # record audio features
+    idx = 0
+    for feat in [speech_rate, max_freq, min_freq, avg_freq, pauses]:
+        f.write(AUDIO_FEATURES[idx] + ' ' + str(feat) + '\n')
+        idx += 1
+
+    # record POS features
+    for k in POS:
+        f.write(k + ' ' + str(tags_pos[k]) + '\n')
+
+    # record sentiment scores
+    for sent in SENTIMENT:
+        f.write(sent + ' ' + str(sentiment_scores[sent]) + '\n')
+
+    f.close()
+
+
+analyze_answer('response_1.wav', 'response_1.txt')
