@@ -80,6 +80,7 @@ def analyze_audio_file(filename):
 
     return max_freq, min_freq, avg_freq, pauses
 
+
 def analyze_speech(speech):
     tokens = nltk.word_tokenize(speech)
 
@@ -98,3 +99,14 @@ def analyze_speech(speech):
     sentiment_scores = sid.polarity_scores(speech)
 
     return tags_pos, sentiment_scores
+
+
+def analyze_speech_from_audio(audio_file):
+    r = sr.Recognizer()
+    r.pause_threshold = PAUSE_THRESHOLD
+
+    with sr.WavFile(audio_file) as source:  # use "test.wav" as the audio source
+        audio = r.record(source)  # extract audio data from the file
+
+    speech = r.recognize_google(audio)
+    analyze_speech(speech)
