@@ -23,6 +23,10 @@ def detect_and_display(frame):
 
         # In each face, detect eyes
         eyes = eyes_cascade.detectMultiScale(faceROI, 1.3, 10)
+        for (x2, y2, w2, h2) in eyes:
+            eye_center = (x + x2 + w2//2, y + y2 + h2//2)
+            radius = int(round((w2 + h2) * 0.25))
+            frame = cv.circle(frame, eye_center, radius, (255, 0, 0), 4)
 
 
 cap = cv.VideoCapture(0)
