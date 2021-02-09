@@ -7,6 +7,15 @@ face_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalf
 eyes_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_eye.xml')
 
 
+def detect_and_display(frame):
+    frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+    frame_gray = cv.equalizeHist(frame_gray)
+
+    # Detect faces
+    faces = face_cascade.detectMultiScale(frame_gray)
+    faces = sorted(faces, key=lambda f: f[2] * f[3], reverse=True)
+
+
 cap = cv.VideoCapture(0)
 
 while(True):
