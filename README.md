@@ -1,6 +1,6 @@
 # Science Fair Project
 
-This is the code repository for our science fair project. We are cbuilding a lie detector test based on a few features: speech recogintion and analysis, microexpression analysis, and heart rate. We are using Machine Learning concepts and packages to predict whether a subject is lying.
+This is the code repository for our science fair project. We are building a lie detector test based on a few features: speech recogintion and analysis, microexpression analysis, and heart rate. We are using Machine Learning concepts and packages to predict whether a subject is lying.
 
 
 ## Contributors
