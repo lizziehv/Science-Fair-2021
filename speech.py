@@ -79,3 +79,22 @@ def analyze_audio_file(filename):
     pauses = len(silence_in_audio)
 
     return max_freq, min_freq, avg_freq, pauses
+
+def analyze_speech(speech):
+    tokens = nltk.word_tokenize(speech)
+
+    # recognize parts of speech
+    tags = nltk.pos_tag(tokens)
+    tags_pos = {pos: 0 for pos in POS}
+
+    for t in tags:
+        if t[1] in tags_pos:
+            tags_pos[t[1]] += 1
+
+    tags_pos = {pos: tags_pos[pos]/len(tags) for pos in POS}  # get rates
+
+    # analyze sentiment
+    sid = SentimentIntensityAnalyzer()
+    sentiment_scores = sid.polarity_scores(speech)
+
+    return tags_pos, sentiment_scores
