@@ -62,3 +62,20 @@ def get_audio_and_rate(audio_file):
         print("Google Speech Recognition could not understand audio")
     except sr.RequestError as e:
         print("Could not request results from Google Speech Recognition service; {0}".format(e))
+
+
+# return max freq, min freq, avg freq, number of pauses
+def analyze_audio_file(filename):
+    # from https://pypi.org/project/crepe/ : "timestamps, predicted fundamental frequency in Hz, voicing confidence,
+    # i.e. the confidence in the presence of a pitch"
+
+    audio_sr, audio = wavfile.read(filename)
+    audio_time, frequency, confidence, activation = crepe.predict(audio, audio_sr, viterbi=True)
+    max_freq, min_freq, avg_freq = max(frequency), min(frequency), sum(frequency)/len(frequency)
+
+    # detect silence in audio
+    audio = AudioSegment.from_wav(filename)
+    silence_in_audio = silence.detect_silence(audio, min_silence_len=1000, silence_thresh=audio.dBFS-16)
+    pauses = len(silence_in_audio)
+
+    return max_freq, min_freq, avg_freq, pauses
