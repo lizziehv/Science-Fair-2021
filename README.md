@@ -21,8 +21,9 @@ This is the code repository for our science fair project. We are building a lie 
 - [PyDub]
 - [Tensorflow]
 
-### Microexpressions detector
-- [Keras]
+### Eye tracking
+- [OpenCV]
 
-### Visualization
-- [plotly](https://hackernoon.com/audio-handling-basics-how-to-process-audio-files-using-python-cli-jo283u3y)
+### Visualization and Machine Learning
+- [Matplotlib]
+- [Scikit Learn]
