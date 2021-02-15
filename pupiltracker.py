@@ -39,6 +39,44 @@ def euclidean_distance(point1 , point2):
     return sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
 
 
+def update_eyebbbox(eye_center):
+    global eye_m_west, eye_m_north, eye_m_south, eye_m_east
+
+    if eye_center[0] < eye_m_west:
+        eye_m_west = eye_center[0]
+    if eye_center[1] < eye_m_north:
+        eye_m_north = eye_center[1]
+    if eye_center[0] > eye_m_east:
+        eye_m_east = eye_center[0]
+    if eye_center[1] > eye_m_south:
+        eye_m_south = eye_center[1]
+
+
+def eye_area():
+    return (eye_m_south - eye_m_north) * (eye_m_east - eye_m_west)
+
+
+def get_blink_ratio(eye_points, facial_landmarks):
+    # loading all the required points
+    corner_left = (facial_landmarks.part(eye_points[0]).x,
+                   facial_landmarks.part(eye_points[0]).y)
+    corner_right = (facial_landmarks.part(eye_points[3]).x,
+                    facial_landmarks.part(eye_points[3]).y)
+
+    center_top = midpoint(facial_landmarks.part(eye_points[1]),
+                          facial_landmarks.part(eye_points[2]))
+    center_bottom = midpoint(facial_landmarks.part(eye_points[5]),
+                             facial_landmarks.part(eye_points[4]))
+
+    # calculating distance
+    horizontal_length = euclidean_distance(corner_left, corner_right)
+    vertical_length = euclidean_distance(center_top, center_bottom)
+
+    ratio = horizontal_length / vertical_length
+
+    return ratio
+
+
 def detect_and_display(frame):
     frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
     frame_gray = cv.equalizeHist(frame_gray)
