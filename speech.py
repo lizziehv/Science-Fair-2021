@@ -4,6 +4,7 @@
 # NOTE: this also requires PyAudio because it uses the Microphone
 import speech_recognition as sr
 import time
+import moviepy.editor as moviepy
 
 import crepe
 from scipy.io import wavfile
@@ -32,6 +33,23 @@ SENTIMENT = ['neg', 'neu', 'pos', 'compound']
 AUDIO_FEATURES = ['SPEECH_RATE', 'MAX_FREQ', 'MIN_FREQ', 'AVG_FREQ', 'PAUSES']
 
 PAUSE_THRESHOLD = 0.5
+
+sid = SentimentIntensityAnalyzer()
+
+
+def get_speech_and_rate(audio_file):
+    r = sr.Recognizer()
+    r.pause_threshold = PAUSE_THRESHOLD
+
+    with sr.WavFile(audio_file) as source:  # use "test.wav" as the audio source
+        audio = r.record(source)  # extract audio data from the file
+
+    (source_rate, source_sig) = wavfile.read(audio_file)
+    duration = (len(source_sig) / float(source_rate)) / 60
+
+    speech = r.recognize_google(audio)
+    speech_rate = len(speech.split(" ")) / duration
+    return speech, speech_rate
 
 
 # record response to file name
@@ -95,7 +113,6 @@ def analyze_speech(speech):
     tags_pos = {pos: tags_pos[pos]/len(tags) for pos in POS}  # get rates
 
     # analyze sentiment
-    sid = SentimentIntensityAnalyzer()
     sentiment_scores = sid.polarity_scores(speech)
 
     return tags_pos, sentiment_scores
@@ -113,7 +130,7 @@ def analyze_speech_from_audio(audio_file):
 
 
 def analyze_answer(audio_file, features_file):
-    speech, speech_rate = get_audio_and_rate(audio_file)
+    speech, speech_rate = get_speech_and_rate(audio_file)
     max_freq, min_freq, avg_freq, pauses = analyze_audio_file(audio_file)
     tags_pos, sentiment_scores = analyze_speech(speech)
 
@@ -138,4 +155,4 @@ def analyze_answer(audio_file, features_file):
     f.close()
 
 
-analyze_answer('response_1.wav', 'response_1.txt')
+analyze_answer('example1.wav', 'response_1.txt')
