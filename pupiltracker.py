@@ -1,10 +1,42 @@
-from __future__ import print_function
-import cv2 as cv
-import numpy as np
+# ------------Step 1: Use VideoCapture in OpenCV------------
+import cv2
+import dlib
+from math import sqrt, inf
+from moviepy.editor import VideoFileClip
+
+# Face detection with dlib
+detector = dlib.get_frontal_face_detector()
+
+# Landmark prediction
+landmarks_file = "/Users/lizziehernandez/Desktop/Science Fair 2021/shape_predictor_68_face_landmarks.dat"
+predictor = dlib.shape_predictor(landmarks_file)
+
+# eye landmarks
+left_eye_landmarks = [36, 37, 38, 39, 40, 41]
+right_eye_landmarks = [42, 43, 44, 45, 46, 47]
+nose_landmarks = [31, 35]
+BLINK_RATIO_THRESHOLD = 5.7
+
+# Face and eye classifiers from OpenCv
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+eyes_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
+
+count = 0
+blinking = False
+
+eye_m_north = +inf
+eye_m_south = -inf
+eye_m_west = +inf
+eye_m_east = -inf
+nose_width_max = -inf
+nose_width_min = inf
+
+def midpoint(point1 ,point2):
+    return int((point1.x + point2.x)/2), int((point1.y + point2.y)/2)
 
 
-face_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_frontalface_default.xml')
-eyes_cascade = cv.CascadeClassifier(cv.data.haarcascades + 'haarcascade_eye.xml')
+def euclidean_distance(point1 , point2):
+    return sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
 
 
 def detect_and_display(frame):
