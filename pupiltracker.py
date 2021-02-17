@@ -1,7 +1,14 @@
 # ------------Step 1: Use VideoCapture in OpenCV------------
+# import the necessary packages
+from __future__ import print_function
+from imutils.video import WebcamVideoStream
+from imutils.video import FPS
+import imutils
+
 import cv2
 import dlib
 from math import sqrt, inf
+import time
 from moviepy.editor import VideoFileClip
 
 # Face detection with dlib
@@ -15,7 +22,7 @@ predictor = dlib.shape_predictor(landmarks_file)
 left_eye_landmarks = [36, 37, 38, 39, 40, 41]
 right_eye_landmarks = [42, 43, 44, 45, 46, 47]
 nose_landmarks = [31, 35]
-BLINK_RATIO_THRESHOLD = 5.7
+BLINK_RATIO_THRESHOLD = 5.2
 
 # Face and eye classifiers from OpenCv
 face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
@@ -31,12 +38,13 @@ eye_m_east = -inf
 nose_width_max = -inf
 nose_width_min = inf
 
-def midpoint(point1 ,point2):
-    return int((point1.x + point2.x)/2), int((point1.y + point2.y)/2)
+
+def midpoint(point1, point2):
+    return int((point1.x + point2.x) / 2), int((point1.y + point2.y) / 2)
 
 
-def euclidean_distance(point1 , point2):
-    return sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
+def euclidean_distance(point1, point2):
+    return sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
 
 def update_eyebbbox(eye_center):
@@ -83,7 +91,7 @@ def get_nose_width(facial_landmarks):
                    facial_landmarks.part(nose_landmarks[0]).y)
 
     corner_right = (facial_landmarks.part(nose_landmarks[1]).x,
-                   facial_landmarks.part(nose_landmarks[1]).y)
+                    facial_landmarks.part(nose_landmarks[1]).y)
 
     distance = euclidean_distance(corner_left, corner_right)
 
@@ -111,80 +119,87 @@ def detect_blinking(frame):
 
         if blink_ratio > BLINK_RATIO_THRESHOLD:
             # Blink detected! Do Something!
-            cv2.putText(frame, "BLINKING", (10, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                        2, (255, 255, 255), 2, cv2.LINE_AA)
+            frame = cv2.putText(frame, "BLINKING", (10, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                                2, (255, 255, 255), 2, cv2.LINE_AA)
 
             if not blinking:
                 count += 1
+                print("blink")
                 blinking = True
         else:
             blinking = False
 
+    return frame
+
 
 def detect_and_display(frame, display=True):
     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    frame_gray = cv2.equalizeHist(frame_gray)
+    # frame_gray = cv2.equalizeHist(frame_gray)
 
-    detect_blinking(frame_gray)
+    frame = detect_blinking(frame_gray)
 
     # Detect faces
     faces = face_cascade.detectMultiScale(frame_gray)
     faces = sorted(faces, key=lambda f: f[2] * f[3], reverse=True)
 
     for (x, y, w, h) in faces[:1]:
-        center = (x + w//2, y + h//2)
-        if display:
-            frame = cv2.ellipse(frame, center, (w//2, h//2), 0, 0, 360, (255, 0, 255), 4)
-        faceROI = frame_gray[y:y+h,x:x+w]
+        center = (x + w // 2, y + h // 2)
+        frame = cv2.ellipse(frame, center, (w // 2, h // 2), 0, 0, 360, (255, 0, 255), 4)
+        faceROI = frame_gray[y:y + h, x:x + w]
 
         # In each face, detect eyes
         eyes = eyes_cascade.detectMultiScale(faceROI, 1.3, 10)
         if len(eyes) < 2:
-            return
+            return frame
 
         eyes = sorted(eyes, key=lambda e: e[0])
         for (x2, y2, w2, h2) in eyes[:1]:
-            eye_center = (x + x2 + w2//2, y + y2 + h2//2)
-            if display:
-                frame = cv2.circle(frame, eye_center, 10, (255, 0, 0), 4)
+            eye_center = (x + x2 + w2 // 2, y + y2 + h2 // 2)
+            frame = cv2.circle(frame, eye_center, 10, (255, 0, 0), 4)
             dist_from_face_center = (abs(eye_center[0] - center[0]), abs(eye_center[1] - center[1]))
             update_eyebbbox(dist_from_face_center)
 
-    if display:
-        cv2.imshow('Capture - Face detection', frame)
+    return frame
 
 
 # filename should be 0 for webcam
 def get_video_data(filename, display=True):
-    cap = cv2.VideoCapture(filename)
+    # vs = WebcamVideoStream(src=filename).start()
+    cam = cv2.VideoCapture(filename)
 
-    while True:
+    if display:
+        start_time = time.time()
+
+    while cam.isOpened():
         # capturing frame
-        retval, frame = cap.read()
+        #frame = vs.read()
+        ret, frame = cam.read()
 
         # exit the application if frame not found
-        if not retval:
-            print("Can't receive frame (stream end?). Exiting ...")
+        if ret == False or frame is None:
+            print("Stream end")
             break
 
-        # detect_blinking(frame)
-        detect_and_display(frame, display=display)
+        frame = detect_and_display(frame, display=display)
+        cv2.imshow('window-name', frame)
 
-        if display:
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+        # detect_blinking(frame)
+
+        if cv2.waitKey(10) & 0xFF == ord('q'):
+            break
 
     # releasing the VideoCapture object
-    cap.release()
     cv2.destroyAllWindows()
+    cam.release()
+    #vs.stop()
 
     # return data : blinks per minute, eye movement measure
     if not display:
         duration = VideoFileClip(filename).duration / 60
-        print('Blinks per minute', count / duration)
     else:
-        duration = 60  # placeholder
+        duration = (time.time() - start_time) / 60
 
+    print('Blinks', count, 'duration', duration)
     print('Eye area movement', eye_area())
     return count / duration, eye_area()
 
@@ -198,7 +213,20 @@ def save_data_to_file(original_fname, save_to):
 
 
 if __name__ == '__main__':
-    fname = '/'
-    save = '/'
+    dir = '../test-data/subject'
+    ntest = [0, 0, 1, 1, 4, 4, 4, 1]
 
-    save_data_to_file(fname, save)
+    for j in range(1, 7):
+        for i in range(1, ntest[j] + 1):
+            count = 0
+            blinking = False
+
+            eye_m_north = +inf
+            eye_m_south = -inf
+            eye_m_west = +inf
+            eye_m_east = -inf
+            nose_width_max = -inf
+            nose_width_min = inf
+
+            s_dir = dir + str(j) + '/test/'
+            save_data_to_file(s_dir + str(i) + '.mov', s_dir + str(i) + '.txt')
